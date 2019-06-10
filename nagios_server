@@ -1,0 +1,74 @@
+Nagios Server
+
+yum install httpd php php-cli gcc glibc glibc-common gd gd-devel net-snmp
+systemctl enable httpd, systemctl start httpd, confirm status
+yum install make openssl-devel xinetd unzip
+useradd nagios: create a user named nagios
+groupadd nagcmd : creates a group called nagcmd
+usermod -a -G nagcmd nagios: add the user nagios to the group nagcmd
+usermod -a -G nagcmd apache: add the user apache to the group nagcmd
+passwd nagios: set password for user nagios
+
+Nagios Core
+
+curl -L -O https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.1.1.tar.gz : download the nagios core 
+tar xvf nagios-*.tar.gz
+cd nagios : ./configure --with-command-group-nagcmd
+make all : complie the nagios core
+make install
+make instal-commandmode
+make install-init
+make install-config
+make install-webconf
+usermod -G nagcmd apache
+switch back to home
+
+Nagios-Plugins
+
+curl -L -O http://nagios-plugins.org/download/nagios-plugins-2.1.1.tar.gz
+tar xvf nagios-plugins-*.tar.gz
+cd nagios-plugin : ./configure --with-nagios-user-nagios --with-nagios-group-nagios --with-openssl
+make
+make install
+
+NRPE
+
+cd ~
+curl -L -O https://sourceforge.net/projects/nagios/files/nrpe-2.x/nrpe-2.15/nrpe-2.15.tar.gz
+tar xvf nrpe-*.tar.gz
+cd nrpe : ./configure --enable-command-args --with-nagios-user-nagios -with-nagios-group=nagios --with-ssl=/usr/bin/openssl --with-ssl-lib=/usr/lib/x86_64-linux-gnu
+make all
+make install-xinetd
+make install-daemon-config
+vi /etc/xinetd.d/nrpe
+only_from = 127.0.0.1 "Server Public Ip"
+restart xinetd : systemctl restart xinetd
+
+Configure Nagios
+
+vi /usr/local/nagios/etc/nagios.cfg
+change it to server and uncomment the line cfg_dir=/usr/local/nagios/etc/servers
+make the server dir : mkdir /usr/local/nagios/etc/servers
+
+configure emails:
+vi /usr/local/nagios/etc/objects/contatcs.cfg
+
+configure Nrpe
+vi /usr/local/nagios/etc/objects/commands.cfg
+
+add these command to the bottom
+define command {
+	command_name check_nrpe
+	command_line $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+}
+
+Configuring Apache
+htpasswd -c /usr/local/nagios/etc/htpassd.users nagiosadmin
+so change the instance of the default in this file to your new username
+vi /usr/local/nagios/etc/cgi.cfg
+
+systemctl enable nagios.service, systemctl start nagios.service, systemctl status nagios.service
+systemctl restart httpd.service
+chkconfig nagios on
+
+go to browser http://ip/nagios
