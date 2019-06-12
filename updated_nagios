@@ -1,0 +1,62 @@
+############
+This guide helps to install Nagio Core on a CentOS7 server machine
+
+login to your centos machine using your ssh client
+
+yum update
+#Install all php and web server depencies
+
+yum install -y httpd mariadb-server php php-mysql 
+
+systemctl start mariadb.service
+
+mysql_secure_installation
+
+systemctl enable httpd.service
+systemctl enable mariadb.service
+
+yum install gcc glibc glibc-common wget gd gd-devel perl postfix unzip -y
+
+cd /tmp
+wget -O nagioscore.tar.gz https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.2.tar.gz
+tar xzf nagioscore.tar.gz
+
+cd /tmp/nagioscore-nagios-4.4.2
+
+./configure
+
+make all
+make install
+make install-daemoninit
+make install-config
+make install-commandmode
+make install-webconf
+
+systemctl restart httpd
+
+htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+
+
+yum install gcc glibc glibc-common make gettext automake autoconf wget openssl-devel net-snmp net-snmp-utils epel-release perl-Net-SNMP -y
+
+cd /tmp
+
+wget --no-check-certificate -O nagios-plugins.tar.gz https://github.com/nagios-plugins/nagios-plugins/archive/release-2.2.1.tar.gz
+tar zxf nagios-plugins.tar.gz
+
+cd /tmp/nagios-plugins-release-2.2.1/
+./tools/setup
+./configure
+make
+make install
+
+systemctl start nagios
+systemctl status nagios
+
+#go to your browser and confirm your nagios
+with your credentials created earlier
+
+username:nagiosadmin
+password: the password you created
+
+http://your_ip/nagios
