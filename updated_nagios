@@ -26,6 +26,8 @@ cd /tmp/nagioscore-nagios-4.4.2
 ./configure
 
 make all
+make install-groups-users
+usermod -a -G nagios apache
 make install
 make install-daemoninit
 make install-config
